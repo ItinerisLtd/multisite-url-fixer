@@ -18,12 +18,14 @@ class URLFixer
         add_filter('option_home', [$this, 'fixHomeURL']);
         add_filter('option_siteurl', [$this, 'fixSiteURL']);
         add_filter('network_site_url', [$this, 'fixNetworkSiteURL'], 10, 3);
+        add_filter('plugins_url', [$this, 'fixNetworkPluginsURL']);
     }
 
     /**
      * Ensure that home URL does not contain the /wp subdirectory.
      *
      * @param string $value the unchecked home URL
+     *
      * @return string the verified home URL
      */
     public function fixHomeURL($value)
@@ -38,6 +40,7 @@ class URLFixer
      * Ensure that site URL contains the /wp subdirectory.
      *
      * @param string $url the unchecked site URL
+     *
      * @return string the verified site URL
      */
     public function fixSiteURL($url)
@@ -54,6 +57,7 @@ class URLFixer
      * @param string $url    the unchecked network site URL with path appended
      * @param string $path   the path for the URL
      * @param string $scheme the URL scheme
+     *
      * @return string the verified network site URL
      */
     public function fixNetworkSiteURL($url, $path, $scheme)
@@ -66,5 +70,21 @@ class URLFixer
         }
 
         return $url . $path;
+    }
+
+    /**
+     * Ensure that calls to `plugins_url()` return the current site URL.
+     *
+     * @param string $url the unchecked plugin URL
+     *
+     * @return string the verified plugin URL
+     */
+    public function fixNetworkPluginsURL($url)
+    {
+        if (! is_multisite() || ! is_subdomain_install()) {
+            return $url;
+        }
+
+        return str_replace(WP_CONTENT_URL, home_url(CONTENT_DIR), $url);
     }
 }
